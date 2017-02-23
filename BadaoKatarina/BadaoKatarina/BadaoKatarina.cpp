@@ -29,6 +29,7 @@ PLUGIN_EVENT(void) OnGameUpdate()
 	//	items = items + " ; " + std::to_string(data.Id_) + "(" + data.Name_ +")";
 	//}
 	//GGame->PrintChat(items.c_str());
+
     //if (GGame->TickCount() - lasttick <= 5000)
 	//	return;
 	//lasttick = GGame->TickCount();
@@ -114,6 +115,11 @@ PLUGIN_API void OnLoad(IPluginSDK* PluginSDK)
 {
 	// Initializes global interfaces for core access
 	PluginSDKSetup(PluginSDK);
+	if (!Contains(GEntityList->Player()->ChampionName(),"katarina"))
+	{
+		return;
+	}
+	GRender->Notification(Vec4(0, 255, 0, 255), 10, "BadaoKatarina loaded!");
 	GEventManager->AddEventHandler(kEventOnGameUpdate, OnGameUpdate);
 	GEventManager->AddEventHandler(kEventOnCreateObject, OnCreateObject);
 	GEventManager->AddEventHandler(kEventOnDestroyObject, OnDestroyObject);

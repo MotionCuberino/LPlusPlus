@@ -15,5 +15,9 @@ inline void FleeOnUpdate()
 				E->CastOnPosition(pos);
 			}
 		}
+		if (W->IsReady())
+		{
+			W->CastOnPlayer();
+		}
 	}
 }
