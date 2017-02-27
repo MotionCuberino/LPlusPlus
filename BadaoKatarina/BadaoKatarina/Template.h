@@ -1,5 +1,6 @@
 #pragma once
 #include "PluginSDK.h"
+#include <algorithm>
 
 using namespace std;
 
@@ -56,6 +57,8 @@ public:
 	{
 		return elems.size();
 	}
+	template <class T2>
+	SArray<T> OrderBy(std::function<T2(T)>);
 };
 
 
@@ -65,7 +68,6 @@ SArray<T> SArray<T>::Add(T elem)
 	elems.push_back(elem);
 	return SArray<T>(elems);
 }
-
 template <class T>
 SArray<T> SArray<T>::AddRange(SArray<T> elemstoadd)
 {
@@ -182,6 +184,14 @@ T SArray<T>::MaxOrDefault(std::function<T2(T)> MaxOrDefault)
 			returnelem = i;
 	}
 	return returnelem;
+}
+
+template<class T>
+template<class T2>
+SArray<T> SArray<T>::OrderBy(std::function<T2(T)> OrderBy)
+{
+	std::sort(elems.begin(), elems.end(), [&](T a, T b) { return OrderBy(a) < OrderBy(b); });
+	return SArray<T>(elems);
 }
 
 

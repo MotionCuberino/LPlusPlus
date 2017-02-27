@@ -1,5 +1,5 @@
 #pragma once
-#include "BadaoKatarinaVariables.h"
+#include "Variables.h"
 
 inline void MenuAndSpell()
 {

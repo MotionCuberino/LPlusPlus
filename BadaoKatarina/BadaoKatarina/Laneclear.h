@@ -27,3 +27,16 @@ inline void LaneClearOnUpdate()
 		}
 	}
 };
+
+PLUGIN_EVENT(void) LaneClearEventOnGameUpdate()
+{
+	LaneClearOnUpdate();
+}
+void LaneClearOnload()
+{
+	GEventManager->AddEventHandler(kEventOnGameUpdate, LaneClearEventOnGameUpdate);
+}
+void LaneClearOnUnload()
+{
+	GEventManager->RemoveEventHandler(kEventOnGameUpdate, LaneClearEventOnGameUpdate);
+}

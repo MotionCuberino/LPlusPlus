@@ -1,5 +1,5 @@
 #pragma once
-#include "BadaoKatarinaVariables.h"
+#include "Variables.h"
 
 inline bool IsDaggerFixed(IUnit* target)
 {
@@ -39,27 +39,27 @@ inline void CastEFixedDagger(KatarinaDagger dagger, IUnit* target)
 }
 inline double GetPassiveDamage(IUnit* target)
 {
-	int nhantu = Player->GetLevel() < 6 ? 0 :
+	int nhantu = Player()->GetLevel() < 6 ? 0 :
 
-		(Player->GetLevel() < 11 ? 1 :
+		(Player()->GetLevel() < 11 ? 1 :
 
-			(Player->GetLevel() < 16 ? 2 : 3));
+			(Player()->GetLevel() < 16 ? 2 : 3));
 
-	auto raw = vector<double>({ 75, 80, 87, 94, 102, 111, 120, 131, 143, 155, 168, 183, 198, 214, 231, 248, 267, 287 }).at(Player->GetLevel() - 1)
+	auto raw = vector<double>({ 75, 80, 87, 94, 102, 111, 120, 131, 143, 155, 168, 183, 198, 214, 231, 248, 267, 287 }).at(Player()->GetLevel() - 1)
 
-		+ Player->PhysicalDamageMod()
+		+ Player()->PhysicalDamageMod()
 
-		+ vector<double>({ 0.55, 0.70, 0.85, 1 }).at(nhantu) * Player->TotalMagicDamage();
+		+ vector<double>({ 0.55, 0.70, 0.85, 1 }).at(nhantu) * Player()->TotalMagicDamage();
 
-	return GDamage->CalcMagicDamage(Player, target, raw);
+	return GDamage->CalcMagicDamage(Player(), target, raw);
 }
 inline double GetQDamage(IUnit* target)
 {
-	return GDamage->GetSpellDamage(Player, target, kSlotQ);
+	return GDamage->GetSpellDamage(Player(), target, kSlotQ);
 }
 inline double GetEDamage(IUnit* target)
 {
-	return GDamage->GetSpellDamage(Player, target, kSlotE);
+	return GDamage->GetSpellDamage(Player(), target, kSlotE);
 }
 //public static double GetQDamage(Obj_AI_Base target)
 //
@@ -109,14 +109,14 @@ inline SArray <IUnit*> GetEVinasun()
 		Minions.AddRange(GEntityList->GetAllMinions(true, true, true)).Where([](IUnit* i) -> bool
 	{
 		return
-			i != nullptr && !IsWard(i) && Distance(Player, i) <= ERange && !i->IsDead();
+			i != nullptr && !IsWard(i) && Distance(Player(), i) <= ERange && !i->IsDead();
 	});
 
 	SArray <IUnit*> Heroes =
 		Heroes.AddRange(GEntityList->GetAllHeros(true, true)).Where([](IUnit* i) -> bool
 	{
 		return
-			i != nullptr && i->IsTargetable() && Distance(Player, i) <= ERange && !i->IsDead();
+			i != nullptr && i->IsTargetable() && Distance(Player(), i) <= ERange && !i->IsDead();
 	});
 
 	SArray <IUnit*> Dao =
@@ -128,7 +128,7 @@ inline SArray <IUnit*> GetEVinasun()
 	})).Where([&](IUnit* i2)
 	{
 		return
-			i2 != nullptr && Distance(Player, i2) <= ERange;
+			i2 != nullptr && Distance(Player(), i2) <= ERange;
 	});
 
 	Vinasun.AddRange(Minions).AddRange(Heroes).AddRange(Dao);
@@ -141,13 +141,13 @@ inline SArray <IUnit*> GetQVinasun()
 	SArray <IUnit*> Minions = Minions.AddRange(GEntityList->GetAllMinions(true, true, true)).Where([&](IUnit* i)
 	{
 		return
-			!IsWard(i) && Distance(Player, i) <= QRange && !i->IsDead();
+			!IsWard(i) && Distance(Player(), i) <= QRange && !i->IsDead();
 	});
 
 	SArray <IUnit*> Heroes = Heroes.AddRange(GEntityList->GetAllHeros(true, true)).Where([&](IUnit* i)
 	{
 		return
-			i != nullptr && i->IsTargetable() && Distance(Player, i) <= QRange && !i->IsDead();
+			i != nullptr && i->IsTargetable() && Distance(Player(), i) <= QRange && !i->IsDead();
 	});
 	Vinasun.AddRange(Minions).AddRange(Heroes);
 	return Vinasun;

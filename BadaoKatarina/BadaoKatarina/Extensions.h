@@ -132,7 +132,7 @@ inline bool IsKeyDown(IMenuOption* menuOption)
 	return (GetAsyncKeyState(menuOption->GetInteger()) & 0x8000) != 0;
 }
 //select target
-inline IUnit* SelectTarget(eDamageType type,float range)
+inline IUnit* SelectTarget(eDamageType type, float range)
 {
 	return GTargetSelector->FindTarget(QuickestKill, type, range);
 }
@@ -163,7 +163,7 @@ inline bool Contains(string Container, string Contained)
 inline bool IsWard(IUnit* target)
 {
 	Vec2 pos;
-	return Contains(target->GetObjectName(), "ward") && !Contains(target->GetObjectName(),"corpse");
+	return Contains(target->GetObjectName(), "ward") && !Contains(target->GetObjectName(), "corpse");
 }
 //lay khoang cach ne may ban
 inline Vec2 ToVec2(Vec3 vec)
@@ -200,15 +200,15 @@ inline Vec3 Extend(Vec3 from, Vec3 to, float distance)
 inline int CountEnemiesInRange(Vec3 Position, float Range)
 {
 	vector<IUnit*> a;
-	a = SArray<IUnit*>(GEntityList->GetAllHeros(false, true)).Where([&](IUnit* i) { return 
+	a = SArray<IUnit*>(GEntityList->GetAllHeros(false, true)).Where([&](IUnit* i) { return
 		i != nullptr && !i->IsDead() && Distance(i->GetPosition(), Position) <= Range; }).ToVector();
 	return a.size();
 }
 
-inline SArray<IUnit*> ValidTargets (vector<IUnit*> input)
+inline SArray<IUnit*> ValidTargets(vector<IUnit*> input)
 {
 	SArray<IUnit*> targets = SArray<IUnit*>(input);
-	return  targets.Where([](IUnit* i) {return i != nullptr && i->IsValidTarget();});
+	return  targets.Where([](IUnit* i) {return i != nullptr && i->IsValidTarget(); });
 }
 inline SArray<IUnit*> ValidAllies(vector<IUnit*> input)
 {
@@ -221,11 +221,12 @@ inline bool IsValidTarget(IUnit* target, float range = 100000)
 }
 inline bool IsValidAllies(IUnit* target, float range = 100000)
 {
-	return target != nullptr && !target->IsDead() && Distance(GEntityList->Player(),target) <= range;
+	return target != nullptr && !target->IsDead() && Distance(GEntityList->Player(), target) <= range;
 }
 inline bool IsValidBoth(IUnit* target, float range = 100000)
 {
-	return IsValidTarget(target, range) || IsValidAllies(target, range);
+	return (target->IsEnemy(GEntityList->Player()) && IsValidTarget(target, range))
+		|| (!target->IsEnemy(GEntityList->Player()) && IsValidAllies(target, range));
 }
 inline SArray<IUnit*> EnemyMinions(float range = 100000)
 {
@@ -243,7 +244,7 @@ inline SArray<IUnit*> AllMinions(float range = 100000)
 {
 	return SArray<IUnit*>(GEntityList->GetAllMinions(true, true, true)).Where([&](IUnit* i) {return IsValidBoth(i, range) && !IsWard(i); });
 }
-inline SArray<IUnit*> WardMinions(float range = 100000,bool jungle = true, bool ally = true, bool enemy = true)
+inline SArray<IUnit*> WardMinions(float range = 100000, bool jungle = true, bool ally = true, bool enemy = true)
 {
 	SArray<IUnit*> allwards = SArray<IUnit*>(GEntityList->GetAllMinions(true, true, true))
 		.Where([&](IUnit* i) {return IsValidBoth(i, range) && IsWard(i); });
@@ -256,4 +257,160 @@ inline SArray<IUnit*> WardMinions(float range = 100000,bool jungle = true, bool 
 	if (enemy) returnwards.AddRange(enemywards);
 	return returnwards;
 }
+inline SArray<IUnit*> ValidEnemies(float range = 100000)
+{
+	return SArray<IUnit*>(GEntityList->GetAllHeros(false, true)).Where([&](IUnit* i) {return IsValidTarget(i); });
+}
+inline SArray<IUnit*> ValidAllies(float range = 100000)
+{
+	return SArray<IUnit*>(GEntityList->GetAllHeros(true, false)).Where([&](IUnit* i) {return IsValidAllies(i); });
+}
+inline SArray<IUnit*> ValidAllHeroes(float range = 100000)
+{
+	return SArray<IUnit*>(GEntityList->GetAllHeros(true, true)).Where([&](IUnit* i) {return IsValidBoth(i); });
+}
+inline bool InAutoAttackRange(IUnit* target)
+{
+	return Distance(GEntityList->Player(), target) <= GEntityList->Player()->BoundingRadius() + GEntityList->Player()->AttackRange() + target->BoundingRadius();
+}
+inline bool InSpellRange(ISpell2* spell, IUnit* target)
+{
+	return Distance(GEntityList->Player(), target) <= spell->Range();
+}
+inline bool InSpellRange(ISpell2* spell, Vec3 position)
+{
+	return Distance(GEntityList->Player(), position) <= spell->Range();
+}
+inline bool HasSummonerSpell(ISpell*  spell)
+{
+	return spell->GetSpellSlot() != kSlotUnknown && spell->IsReady();
+}
+inline void CastItemOnUnit(int itemid, float range, IUnit* target)
+{
+	if (GEntityList->Player()->HasItemId(itemid))
+	{
+		IInventoryItem* Item = GPluginSDK->CreateItemForId(itemid, range);
+		if (IsValidTarget(target) && Item->IsReady())
+		{
+			Item->CastOnTarget(target);
+		}
+	}
+}
+inline Vec4 Red() { return Vec4(255, 0, 0, 255); }
+inline Vec4 Green() { return Vec4(0, 255, 0, 255); }
+inline Vec4 Pink() { return Vec4(255, 0, 255, 255); }
+inline Vec4 Yellow() { return Vec4(255, 255, 0, 255); }
+
 #pragma endregion 
+
+#pragma  region  Delayaction
+struct Action
+{
+	Action(int time, std::function<void()> callback)
+	{
+		Time = time + GGame->TickCount();
+		CallbackObject = callback;
+	}
+
+	void Call()
+	{
+		CallbackObject();
+	}
+
+	std::function<void()> CallbackObject;
+	int Time;
+
+};
+struct ActionIUnit
+{
+	ActionIUnit(int time, IUnit* unit, std::function<void(IUnit*)> callback)
+	{
+		Time = time + GGame->TickCount();
+		CallbackObject = callback;
+		Unit = unit;
+	}
+
+	void Call()
+	{
+		if (Unit != nullptr)
+			CallbackObject(Unit);
+	}
+
+	std::function<void(IUnit*)> CallbackObject;
+	int Time;
+	IUnit* Unit;
+};
+struct ActionPosition
+{
+	ActionPosition(int time, Vec3 position, std::function<void(Vec3)> callback)
+	{
+		Time = time + GGame->TickCount();
+		CallbackObject = callback;
+		Position = position;
+	}
+
+	void Call()
+	{
+		CallbackObject(Position);
+	}
+
+	std::function<void(Vec3)> CallbackObject;
+	int Time;
+	Vec3 Position;
+};
+
+class DelayAction
+{
+public:
+	void OnGameUpdate()
+	{
+		Actions.erase(std::remove_if(Actions.begin(), Actions.end(), [](Action& Args)
+		{
+			if (GGame->TickCount() >= Args.Time)
+			{
+				Args.Call();
+				return true;
+			}
+
+			return false;
+		}), Actions.end());
+		ActionsIunit.erase(std::remove_if(ActionsIunit.begin(), ActionsIunit.end(), [](ActionIUnit& Args)
+		{
+			if (GGame->TickCount() >= Args.Time)
+			{
+				Args.Call();
+				return true;
+			}
+
+			return false;
+		}), ActionsIunit.end());
+		ActionsPosition.erase(std::remove_if(ActionsPosition.begin(), ActionsPosition.end(), [](ActionPosition& Args)
+		{
+			if (GGame->TickCount() >= Args.Time)
+			{
+				Args.Call();
+				return true;
+			}
+
+			return false;
+		}), ActionsPosition.end());
+	}
+
+	void Add(int Time, std::function<void()> Callback)
+	{
+		Actions.emplace_back(Time, Callback);
+	}
+	void AddIUnit(int Time, IUnit* Unit, std::function<void(IUnit*)> Callback)
+	{
+		ActionsIunit.emplace_back(Time, Unit, Callback);
+	}
+	void AddPosition(int Time, Vec3 Position, std::function<void(Vec3)> Callback)
+	{
+		ActionsPosition.emplace_back(Time, Position, Callback);
+	}
+private:
+	std::vector<Action> Actions;
+	std::vector<ActionIUnit> ActionsIunit;
+	std::vector<ActionPosition> ActionsPosition;
+};
+#pragma endregion

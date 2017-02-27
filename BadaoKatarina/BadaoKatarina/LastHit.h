@@ -14,3 +14,16 @@ inline void LastHitOnUpdate()
 		}
 	}
 }
+
+PLUGIN_EVENT(void) LastHitEventOnGameUpdate()
+{
+	LastHitOnUpdate();
+}
+void LastHitOnload()
+{
+	GEventManager->AddEventHandler(kEventOnGameUpdate, LastHitEventOnGameUpdate);
+}
+void LastHitOnUnload()
+{
+	GEventManager->RemoveEventHandler(kEventOnGameUpdate, LastHitEventOnGameUpdate);
+}

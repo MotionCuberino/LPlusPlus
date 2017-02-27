@@ -4,7 +4,7 @@
 inline void HarassOnUpdate()
 {
 	float time;
-	if (GOrbwalking->GetOrbwalkingMode() != kModeMixed  || Player->IsCastingImportantSpell(&time))
+	if (GOrbwalking->GetOrbwalkingMode() != kModeMixed  || Player()->IsCastingImportantSpell(&time))
 		return;
 	// Q 
 	if (Q->IsReady())
@@ -52,7 +52,7 @@ inline void HarassOnUpdate()
 	{
 		auto EdaggerTarget = GTargetSelector->FindTarget(QuickestKill, SpellDamage, ERange + 200);
 		auto ETarget = GTargetSelector->FindTarget(QuickestKill, SpellDamage, ERange);
-		SArray<IUnit*> EdaggerOthers = SArray<IUnit*>(GEntityList->GetAllHeros(false, true)).Where([](IUnit* i) {return Player->IsValidTarget(i, ERange + 200) && IsDaggerFixed(i); });
+		SArray<IUnit*> EdaggerOthers = SArray<IUnit*>(GEntityList->GetAllHeros(false, true)).Where([](IUnit* i) {return Player()->IsValidTarget(i, ERange + 200) && IsDaggerFixed(i); });
 		if (EdaggerTarget != nullptr && IsDaggerFixed(EdaggerTarget))
 		{
 			auto EdaggerTargetdagger = GetFixedDagger(EdaggerTarget);
@@ -80,20 +80,23 @@ inline void HarassOnUpdate()
 			}
 			else
 			{
-				auto pos = Extend(ETarget->GetPosition(), Player->GetPosition(), Q->IsReady() ? 100 : -150);
+				auto pos = Extend(ETarget->GetPosition(), Player()->GetPosition(), Q->IsReady() ? 100 : -150);
 				E->CastOnPosition(pos);
 			}
 		}
 
 	}
-	SArray<IUnit*> EdaggerOthers = Enemies.Where([](IUnit* i) {return IsValidTarget(i, ERange + 200) && IsDaggerFixed(i); });
-	if (EdaggerOthers.Any())
-	{
-		IUnit* target = EdaggerOthers.MinOrDefault<float>([](IUnit* i) {return i->GetHealth(); });
-		KatarinaDagger targetdagger = GetFixedDagger(target);
-		if (!targetdagger.IsNull())
-		{
-			CastEFixedDagger(targetdagger, target);
-		}
-	}
+}
+
+PLUGIN_EVENT(void) HarassEventOnGameUpdate()
+{
+	HarassOnUpdate();
+}
+void HarassOnload()
+{
+	GEventManager->AddEventHandler(kEventOnGameUpdate, HarassEventOnGameUpdate);
+}
+void HarassOnUnload()
+{
+	GEventManager->RemoveEventHandler(kEventOnGameUpdate, HarassEventOnGameUpdate);
 }
