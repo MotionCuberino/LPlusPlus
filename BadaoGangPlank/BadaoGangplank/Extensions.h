@@ -259,15 +259,15 @@ inline SArray<IUnit*> WardMinions(float range = 100000, bool jungle = true, bool
 }
 inline SArray<IUnit*> ValidEnemies(float range = 100000)
 {
-	return SArray<IUnit*>(GEntityList->GetAllHeros(false, true)).Where([&](IUnit* i) {return IsValidTarget(i); });
+	return SArray<IUnit*>(GEntityList->GetAllHeros(false, true)).Where([&](IUnit* i) {return IsValidTarget(i, range); });
 }
 inline SArray<IUnit*> ValidAllies(float range = 100000)
 {
-	return SArray<IUnit*>(GEntityList->GetAllHeros(true, false)).Where([&](IUnit* i) {return IsValidAllies(i); });
+	return SArray<IUnit*>(GEntityList->GetAllHeros(true, false)).Where([&](IUnit* i) {return IsValidAllies(i, range); });
 }
 inline SArray<IUnit*> ValidAllHeroes(float range = 100000)
 {
-	return SArray<IUnit*>(GEntityList->GetAllHeros(true, true)).Where([&](IUnit* i) {return IsValidBoth(i); });
+	return SArray<IUnit*>(GEntityList->GetAllHeros(true, true)).Where([&](IUnit* i) {return IsValidBoth(i, range); });
 }
 inline bool InAutoAttackRange(IUnit* target)
 {
